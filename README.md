@@ -31,4 +31,4 @@
 ### Contributors
 | 검색엔진 | 레시피 이미지 생성 | 레시피 챗봇 | 
 |:----------:|:----------:|:----------:|
-| <br/><div align="center">이수민</div> | <br/><div align="center">이은지</div> | [<img src="https://avatars.githubusercontent.com/u/80513699?v=4" alt="" style="width:100px;100px;">](https://github.com/ahyeon-github) <br/><div align="center">임아현</div>
+|[<img src="https://avatars.githubusercontent.com/u/139690326?v=4" alt="" style="width:100px;100px;">](https://github.com/leedoming) <br/><div align="center">이수민</div> |[<img src="https://avatars.githubusercontent.com/u/158597024?v=4" alt="" style="width:100px;100px;">](https://github.com/maeilej)  <br/><div align="center">이은지</div> | [<img src="https://avatars.githubusercontent.com/u/80513699?v=4" alt="" style="width:100px;100px;">](https://github.com/ahyeon-github) <br/><div align="center">임아현</div>
