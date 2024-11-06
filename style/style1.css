@@ -1,0 +1,21 @@
+/* 앱 전체 배경 색상 설정 */
+.stApp {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+}
+
+/* 사이드바 배경 색상 설정 */
+.css-18e3th9, .css-1d391kg {
+    background-color: #333333;
+}
+
+/* 텍스트 색상 설정 */
+.stApp, .stApp * {
+    color: #FFFFFF !important;
+}
+
+/* 버튼 기본 강조 색상 */
+.stButton>button {
+    background-color: #1E96FC;
+    color: #FFFFFF;
+}

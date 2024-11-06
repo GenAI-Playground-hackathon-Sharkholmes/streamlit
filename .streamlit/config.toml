@@ -1,0 +1,7 @@
+[theme]
+primaryColor="#1E96FC"           # 기본 강조 색상 (버튼 등)
+backgroundColor="#000000"        # 앱 배경 색상
+secondaryBackgroundColor="#2A2A2A"  # 사이드바 등 2차 배경 색상
+textColor="#FFFFFF"              # 텍스트 색상
+
+
