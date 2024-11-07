@@ -1,8 +1,0 @@
-streamlit
-pandas
-requsets
-urllib
-PILLOW
-openai
-youtube_transcript_api
-couchbase
