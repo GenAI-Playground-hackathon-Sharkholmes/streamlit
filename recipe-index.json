@@ -1,0 +1,64 @@
+{
+  "type": "fulltext-index",
+  "name": "recipes._default.recipe-index",
+  "uuid": "2946d30d5803c9a4",
+  "sourceType": "gocbcore",
+  "sourceName": "recipes",
+  "sourceUUID": "98d701f0b5e37f09fd510a6a6cf8b385",
+  "planParams": {
+    "maxPartitionsPerPIndex": 1024,
+    "indexPartitions": 1
+  },
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "type_field",
+      "type_field": "recipe"
+    },
+    "mapping": {
+      "analysis": {
+        "analyzers": {
+          "recipe_ingredients_analyzer": {
+            "char_filters": [
+              "asciifolding"
+            ],
+            "token_filters": [
+              "cjk_bigram"
+            ],
+            "tokenizer": "unicode",
+            "type": "custom"
+          },
+          "recipe_name_analyzer": {
+            "char_filters": [
+              "asciifolding"
+            ],
+            "token_filters": [
+              "cjk_bigram"
+            ],
+            "tokenizer": "unicode",
+            "type": "custom"
+          }
+        }
+      },
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "default_analyzer": "cjk",
+        "dynamic": true,
+        "enabled": true
+      },
+      "default_type": "_default",
+      "docvalues_dynamic": false,
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "_type"
+    },
+    "store": {
+      "indexType": "scorch",
+      "segmentVersion": 15
+    }
+  },
+  "sourceParams": {}
+}
