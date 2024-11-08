@@ -15,6 +15,7 @@ from couchbase.search import (
     DisjunctionQuery
 )
 from recipe_create import diet_recipe
+import backend as be  
 
 # Couchbase 연결
 def get_couchbase_connection():
@@ -172,30 +173,33 @@ def recipe_engine():
                         "steps": steps_text
                     }
                     
-                    if st.button("✅다이어트 레시피 변환", key=f"select_diet"):
-                        st.session_state.diet_recipe_output = diet_recipe(content)
-                        if st.session_state.diet_recipe_output:
-                            selected_output = st.session_state.diet_recipe_output
-                            clean_selected_output = clean_json_string(selected_output)
-                            try:
-                                output_json = json.loads(clean_selected_output)
-                            except json.JSONDecodeError as e:
-                                st.error(f"JSON 파싱 오류: {e}")
-                                return
-
-                            if output_json:
-                                st.write("### 🍱요리명")
-                                st.write(output_json.get('title', 'Title not available'))
-                                
-                                st.write("### 🥬재료")
-                                st.write('✅' + output_json.get('ingredients', 'Ingredients not available'))
-                                
-                                st.write("### 👨🏻‍🍳조리법")
-                                st.write('✅' + output_json.get('steps', 'Steps not available'))
-                            else:
-                                st.write("검색 결과가 없습니다.")
+        
         else:
             st.write("검색 결과가 없습니다.")
 
-if __name__ == "__main__":
-    recipe_engine()
+
+    
+   
+# Streamlit UI
+st.title("안녕하세요 요리랩입니다.") 
+st.session_state.memory = be.buff_memory()  # be 모듈을 통해 buff_memory 함수 호출
+st.session_state.chat_history = []
+
+recipe_engine()
+
+for message in st.session_state.chat_history:
+    with st.chat_message(message['role']): 
+        st.markdown(message["text"]) 
+        
+input_text = st.chat_input("질문을 입력하세요")
+if input_text:
+    with st.chat_message("나"):
+        st.markdown(input_text)
+    st.session_state.chat_history.append({"role": "user", "text": input_text}) 
+    
+    # be 모듈을 통해 cvs_chain 함수 호출
+    chat_response = be.cvs_chain(input_text=input_text, memory=st.session_state.memory)
+    with st.chat_message("챗봇"):
+        st.markdown(chat_response)
+    
+    st.session_state.chat_history.append({"role": "assistant", "text": chat_response})
