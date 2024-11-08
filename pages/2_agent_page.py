@@ -122,13 +122,13 @@ def main():
     # Header
     col1, col2 = st.columns([4,1])
     with col1:
-        st.title("채팅 히스토리")
+        st.title("AGENT 관리 페이지")
     with col2:
         st.button("New Chat", type="secondary", use_container_width=True)
         
     # Sample data for each section (더 많은 아이템 추가)
     sections = {
-        "안성재 - 재료의 의도를 살린 레시피": [
+        "새롭게 생성된 레시피별 대쉬보드 페르소나 별 평가지표": [
             {"image": get_dummy_image(color='#FFE4E1'), "recipe": "봄나물 비빔밥", "date": "2024.04.15"},
             {"image": get_dummy_image(color='#FFE4E1'), "recipe": "된장찌개", "date": "2024.04.15"},
             {"image": get_dummy_image(color='#FFE4E1'), "recipe": "나물무침", "date": "2024.04.15"},
@@ -136,7 +136,7 @@ def main():
             {"image": get_dummy_image(color='#FFE4E1'), "recipe": "갈비찜", "date": "2024.04.15"},
             {"image": get_dummy_image(color='#FFE4E1'), "recipe": "미역국", "date": "2024.04.15"}
         ],
-        "백종원 - 집밥 백선생의 가르침": [
+        "요아정": [
             {"image": get_dummy_image(color='#E6E6FA'), "recipe": "김치찌개", "date": "2024.04.14"},
             {"image": get_dummy_image(color='#E6E6FA'), "recipe": "제육볶음", "date": "2024.04.14"},
             {"image": get_dummy_image(color='#E6E6FA'), "recipe": "간장계란밥", "date": "2024.04.14"},

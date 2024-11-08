@@ -20,7 +20,7 @@ def get_couchbase_connection():
     cluster = Cluster(
         'couchbase://localhost:11210',
         ClusterOptions(
-            PasswordAuthenticator('Administrator', YOUR_PASSWORD)
+            PasswordAuthenticator('Administrator', 'shark1234')
         )
     )
     bucket = cluster.bucket('recipes')
@@ -86,7 +86,7 @@ def fix_image_url(url):
     return url
 
 def recipe_engine():
-    st.write("""# 👩‍🍳키워드 입력을 통한 레시피 찾기""")
+    st.write("""# 👩‍🍳기존에 있는 레시피를 어떻게 변경하면 좋을까""")
     st.write(' ')
     st.write(' ')
     # 사용자로부터 재료 입력 받기
