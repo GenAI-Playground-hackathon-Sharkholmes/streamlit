@@ -1,13 +1,16 @@
 import streamlit as st
 import os
 from PIL import Image
+from slack_bot import SlackRecipeBot  # slack_recipe_bot.py 임포트
+
+# Slack 설정
+SLACK_BOT_TOKEN = "xoxb-4997656156160-7997102205702-DyekH4lzxr4rvWGNChSXVyFA"
+CHANNEL_ID = "C07V95D03PY"
 
 def create_recipe_card(recipe_data):
-    # 3개의 컬럼 생성: 이미지, 레시피 내용, 평가지표
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col1:
-        # 이미지 파일이 현재 디렉토리에 있는지 확인
         image_path = recipe_data["image"]
         if os.path.exists(image_path):
             try:
@@ -24,6 +27,26 @@ def create_recipe_card(recipe_data):
         st.markdown(f"<div class='recipe-content'>{recipe_data['ingredients']}</div>", unsafe_allow_html=True)
         st.markdown("<div class='section-title'>👨‍🍳 조리법</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='recipe-content'>{recipe_data['steps']}</div>", unsafe_allow_html=True)
+        
+        # 출시하기 버튼 추가
+        if st.button("✨ 출시하기", key=f"publish_{recipe_data['title']}", type="primary"):
+            try:
+                # 슬랙 메시지용 데이터 준비
+                slack_recipe_data = {
+                    "title": recipe_data['title'],
+                    "ingredients": [item.strip() for item in recipe_data['ingredients'].split('•') if item.strip()],
+                    "steps": [step.strip() for step in recipe_data['steps'].split('\n')[1:] if step.strip() and step.strip()[0].isdigit()],
+                    "cooking_time": int(recipe_data['steps'].split('조리시간 ')[1].split('분')[0]),
+                    "popular_with": [recipe_data['target_audience']],
+                    "recipe_url": "https://recipe-url.com"  # 실제 URL로 교체 필요
+                }
+                
+                # 슬랙봇으로 전송
+                bot = SlackRecipeBot(SLACK_BOT_TOKEN)
+                bot.send_recipe(CHANNEL_ID, slack_recipe_data)
+                st.success(f"'{recipe_data['title']}' 레시피가 성공적으로 출시되었습니다! 🎉")
+            except Exception as e:
+                st.error(f"레시피 출시 중 오류가 발생했습니다: {str(e)}")
     
     with col3:
         st.markdown("### 평가지표")
@@ -60,7 +83,6 @@ def main():
             margin: 10px 0;
         }
 
-        /* 레시피 내용 폰트 크기 관련 스타일 */
         .recipe-title {
             font-size: 24px;
             font-weight: bold;
@@ -78,15 +100,26 @@ def main():
             line-height: 1.8;
             margin-bottom: 20px;
         }
+        
+        /* 출시하기 버튼 스타일 */
+        .stButton > button[data-baseweb="button"][kind="primary"] {
+            background-color: #FF4B4B;
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        
+        .stButton > button[data-baseweb="button"][kind="primary"]:hover {
+            background-color: #FF3333;
+        }
         </style>
     """, unsafe_allow_html=True)
     
     st.title("레시피 분석 대시보드")
     
-    # 현재 스크립트의 디렉토리 경로 가져오기
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # 샘플 레시피 데이터 - 로컬 이미지 파일 경로 사용
+    # 샘플 레시피 데이터는 그대로 유지
     recipes = [
         {
             "title": "오크베리 아사이볼",
@@ -149,7 +182,6 @@ def main():
         }
     ]
     
-    # 각 레시피에 대한 카드 생성
     for recipe in recipes:
         st.markdown("---")
         create_recipe_card(recipe)
