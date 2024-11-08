@@ -18,7 +18,7 @@ from couchbase.search import (
 # Couchbase 연결
 def get_couchbase_connection():
     cluster = Cluster(
-        'couchbase://',
+        'couchbase://3.35.104.117',
         ClusterOptions(
             PasswordAuthenticator('Administrator', 'shark1234')
         )

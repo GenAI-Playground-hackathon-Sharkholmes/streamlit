@@ -11,6 +11,14 @@ from recipe_create import diet_recipe, effect_create, extract_text
 def clean_json_string(json_string):
     return re.sub(r'[\x00-\x1F\x7F]', '', json_string)
 
+# Initialize session state variables
+if 'selected_output' not in st.session_state:
+    st.session_state.selected_output = None
+if 'selected_recipe' not in st.session_state:
+    st.session_state.selected_recipe = None
+if 'index' not in st.session_state:
+    st.session_state.index = 0
+
 # Data loading
 def load_data():
     youtube_df = pd.read_csv('./data/Youtube_search_df.csv')
@@ -36,11 +44,6 @@ def display_recipes(results):
     if search_query:
         results = [result for result in results if search_query.lower() in result["title"].lower()]
     
-    if 'index' not in st.session_state:
-        st.session_state.index = 0
-    if 'selected_recipe' not in st.session_state:
-        st.session_state['selected_recipe'] = None
-
     total_pages = (len(results) - 1) // 3 + 1
     page = st.slider("", 1, total_pages, st.session_state.index + 1)
     st.session_state.index = page - 1
@@ -62,20 +65,24 @@ def display_recipes(results):
                 st.markdown(f'{result["view"]}, {result["upload_date"]}')
                 if col2.button("✅선택", key=f"select_{i}"):
                     st.session_state.selected_recipe = result
-                    video_id = result['link'].split('/')[-1].replace('-', '_').replace('.', '_')
-                    script = extract_text(video_id)
-                    content = {
-                        "title": result["title"],
-                        "script": script
-                    }
-                    st.session_state.selected_output = diet_recipe(content)
+                    try:
+                        video_id = result['link'].split('/')[-1].replace('-', '_').replace('.', '_')
+                        script = extract_text(video_id)
+                        content = {
+                            "title": result["title"],
+                            "script": script
+                        }
+                        st.session_state.selected_output = diet_recipe(content)
+                    except Exception as e:
+                        st.error(f"Error processing recipe: {str(e)}")
+                        st.session_state.selected_output = None
 
             st.markdown("---")
 
-    if st.session_state.selected_recipe:
-        selected_output = st.session_state.selected_output
-        clean_selected_output = clean_json_string(selected_output)
+    # Display selected recipe details
+    if st.session_state.selected_recipe and st.session_state.selected_output:
         try:
+            clean_selected_output = clean_json_string(st.session_state.selected_output)
             output_json = json.loads(clean_selected_output)
             if output_json:
                 st.write("### 🍱요리명")
@@ -91,13 +98,20 @@ def additional():
     ingredients = st.chat_input("원하는 변경 사항을 입력해주세요!")
     if ingredients:
         st.subheader(f'{ingredients}의 효능')
-        st.write(effect_create(ingredients))
-        st.image("https://via.placeholder.com/500", caption="Generated Image")
+        try:
+            effect = effect_create(ingredients)
+            st.write(effect)
+            st.image("https://via.placeholder.com/500", caption="Generated Image")
+        except Exception as e:
+            st.error(f"Error getting ingredient effects: {str(e)}")
 
 def main():
-    results = load_data()
-    display_recipes(results)
-    additional()
+    try:
+        results = load_data()
+        display_recipes(results)
+        additional()
+    except Exception as e:
+        st.error(f"Application error: {str(e)}")
 
 if __name__ == "__main__":
     main()
