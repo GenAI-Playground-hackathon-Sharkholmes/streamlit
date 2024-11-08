@@ -17,6 +17,13 @@ from couchbase.search import (
 from recipe_create import diet_recipe
 import backend as be  
 
+
+# 세션 상태 초기화
+if 'memory' not in st.session_state:
+    st.session_state.memory = be.buff_memory()
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
+
 # Couchbase 연결
 def get_couchbase_connection():
     cluster = Cluster(
@@ -115,6 +122,11 @@ def recipe_engine():
     st.write("""# 👩‍🍳키워드 입력을 통한 레시피 찾기""")
     st.write(' ')
     st.write(' ')
+    
+    # content 초기화
+    content = None
+    
+    
     ingredients_input = st.text_input("음식, 재료 등 레시피 키워드를 입력하세요")
 
     if ingredients_input:
@@ -164,42 +176,54 @@ def recipe_engine():
                     st.markdown("---")
 
                     # 조리 단계 텍스트만 추출하여 저장
-                    steps_text = "\n".join([f"{i+1}. {step['text']}" 
-                                          for i, step in enumerate(steps)])
+                  
+                    # 조리 단계 텍스트만 추출하여 저장
+                    steps_text = "\n".join([f"{i+1}. {step['text']}" for i, step in enumerate(steps)])
                     
+                    # diet_recipe 사용하여 선택한 레시피 내용을 세션에 저장
                     content = {
                         "title": hit['_source']['RecipeName'],
                         "ingredients": ingredient_names,
                         "steps": steps_text
                     }
-                    
+                    st.session_state.selected_output = diet_recipe(content)
         
         else:
             st.write("검색 결과가 없습니다.")
+    return content
 
 
-    
-   
-# Streamlit UI
-st.title("안녕하세요 요리랩입니다.") 
-st.session_state.memory = be.buff_memory()  # be 모듈을 통해 buff_memory 함수 호출
-st.session_state.chat_history = []
 
-recipe_engine()
 
+# UI 구성
+st.title("안녕하세요 요리랩입니다.")
+content = recipe_engine()
+
+# 채팅 UI
 for message in st.session_state.chat_history:
-    with st.chat_message(message['role']): 
-        st.markdown(message["text"]) 
-        
+    with st.chat_message(message['role']):
+        st.markdown(message["text"])
+
 input_text = st.chat_input("질문을 입력하세요")
 if input_text:
     with st.chat_message("나"):
         st.markdown(input_text)
-    st.session_state.chat_history.append({"role": "user", "text": input_text}) 
+        
+    prompt = "우리는 지금 기존 레시피에서 재료를 변경하고 있어. 최대한 재료를 바꾸려고 노력을 해야해."
     
-    # be 모듈을 통해 cvs_chain 함수 호출
-    chat_response = be.cvs_chain(input_text=input_text, memory=st.session_state.memory)
-    with st.chat_message("챗봇"):
-        st.markdown(chat_response)
+    # 기존 레시피 내용을 JSON 문자열로 변환
+    recipe_text = json.dumps(st.session_state.selected_output, ensure_ascii=False)
     
-    st.session_state.chat_history.append({"role": "assistant", "text": chat_response})
+    # 사용자 입력과 기존 레시피 내용을 결합하여 input_text로 사용
+    combined_input = f"{prompt}\n레시피 정보: {recipe_text}\n사용자 요청: {input_text}"
+    
+    st.session_state.chat_history.append({"role": "user", "text": combined_input})
+    
+    # 대화 생성
+    if st.session_state.selected_output:
+        chat_response = be.cvs_chain(input_text=combined_input, memory=st.session_state.memory)
+        
+        with st.chat_message("챗봇"):
+            st.markdown(chat_response)
+        
+        st.session_state.chat_history.append({"role": "assistant", "text": chat_response})

@@ -25,12 +25,6 @@ def buff_memory():
 def cvs_chain(input_text, memory):
     chain_data = bedrock_chatbot()
     cnvs_chain = ConversationChain(llm=chain_data, memory=memory, verbose=True)
-    
-    chat_reply = cnvs_chain.predict(input=input_text
-                                    )
+    chat_reply = cnvs_chain.predict(input=input_text)
     return chat_reply
-
-
-
-
 
