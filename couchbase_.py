@@ -15,7 +15,7 @@ import socket
 class RecipeSearchManager:
     def __init__(self, host="localhost",
                  username="Administrator", 
-                 password="패스워드 입력",
+                 password="shark1234",
                  bucket_name="recipes"):
         try:
             # 모든 포트를 명시적으로 지정한 연결 문자열
@@ -136,93 +136,69 @@ class RecipeSearchManager:
         return self.model.encode(text).tolist()
 
     def load_data(self, file_path):
-        """CSV 파일에서 데이터를 로드하고 Couchbase에 저장"""
-        print(f"데이터 로드 시작: {file_path}")
-        data = pd.read_csv(file_path)
-        total_rows = len(data)
-        
-        for idx, row in data.iterrows():
-            try:
-                doc_id = f"recipe_{uuid.uuid4()}"
-                
-                # 레시피 이름과 재료를 결합하여 벡터 생성
-                combined_text = f"{row.get('name', '')} {row.get('ingredients', '')}"
-                recipe_vector = self.generate_embedding(combined_text)
-                
-                doc_data = {
-                    "id": row.get("id", ""),
-                    "url": row.get("url", ""),
-                    "name": row.get("name", ""),
-                    "img": row.get("img", ""),
-                    "summary": row.get("summary", ""),
-                    "info1": row.get("info1", ""),
-                    "info2": row.get("info2", ""),
-                    "info3": row.get("info3", ""),
-                    "ingredients": row.get("ingredients", ""),
-                    "combined": row.get("combined", ""),
-                    "recipe_vector": recipe_vector,
-                    "type": "recipe"
-                }
-                
-                self.collection.upsert(doc_id, doc_data)
-                
-                if idx % 100 == 0:
-                    progress = (idx / total_rows) * 100
-                    print(f"진행률: {progress:.2f}% ({idx}/{total_rows})")
-                
-            except Exception as e:
-                print(f"문서 저장 중 오류 발생: {e}")
-                continue
-        
-        print("데이터 로드 완료")
-
-    def hybrid_search(self, query_text, limit=10):
-        """하이브리드 검색 수행"""
-        query_vector = self.generate_embedding(query_text)
-        
-        search_query = {
-            "query": {
-                "conjunction": {
-                    "queries": [
-                        {
-                            "disjunction": {
-                                "queries": [
-                                    {
-                                        "match": {
-                                            "name": query_text,
-                                            "boost": 1.5
-                                        }
-                                    },
-                                    {
-                                        "match": {
-                                            "ingredients": query_text
-                                        }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "vector": {
-                                "field": "recipe_vector",
-                                "vector": query_vector,
-                                "boost": 1.0
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-        
         try:
-            results = self.cluster.search_query(
-                "recipe_vector_index",
-                json.dumps(search_query),
-                SearchOptions(limit=limit)
-            )
-            return results
+            # CSV 파일 읽기
+            data = pd.read_csv(file_path)
+            print(f"총 레시피 수: {len(data)}")
+            total_rows = len(data)
+            
+            for idx, row in data.iterrows():
+                try:
+                    doc_id = f"recipe_{uuid.uuid4()}"
+                    
+                    # 레시피 이름과 재료를 결합하여 벡터 생성 (오타 수정: RecipeNmae -> RecipeName)
+                    name = str(row['RecipeName']) if not pd.isna(row['RecipeName']) else ''
+                    ingredients = str(row['Ingredients_pre']) if not pd.isna(row['Ingredients_pre']) else ''
+                    
+                    combined_text = f"{name} {ingredients}".strip()
+                    recipe_vector = self.generate_embedding(combined_text)
+                    
+                    # 데이터 구성 (original column names 사용)
+                    doc_data = {
+                        "id": str(idx),
+                        "name": name,
+                        "url": str(row['URL']) if not pd.isna(row['URL']) else '',
+                        "img": str(row['Image']) if not pd.isna(row['Image']) else '',
+                        "summary": str(row['Summary']) if not pd.isna(row['Summary']) else '',
+                        "info1": str(row['Steps']) if not pd.isna(row['Steps']) else '',
+                        "info2": str(row['ingredients']) if not pd.isna(row['ingredients']) else '',
+                        "info3": '',
+                        "ingredients": ingredients,
+                        "combined": combined_text,
+                        "recipe_vector": recipe_vector,
+                        "type": "recipe"
+                    }
+                    
+                    # 데이터 검증
+                    if not name or not ingredients:
+                        print(f"경고: {idx}번 레시피의 이름 또는 재료가 비어 있습니다.")
+                        print(f"- 이름: {name}")
+                        print(f"- 재료: {ingredients}")
+                    
+                    # 데이터 저장
+                    self.collection.upsert(doc_id, doc_data)
+                    
+                    if idx % 100 == 0:
+                        progress = (idx / total_rows) * 100
+                        print(f"진행률: {progress:.2f}% ({idx}/{total_rows})")
+                        print(f"샘플 데이터 (id: {doc_id}):")
+                        print(f"- 이름: {doc_data['name']}")
+                        print(f"- 재료: {doc_data['ingredients'][:100]}...")
+                        print(f"- URL: {doc_data['url']}")
+                        print("-" * 50)
+                    
+                except Exception as e:
+                    print(f"문서 {idx}번 저장 중 오류 발생: {e}")
+                    print("문제의 행:")
+                    print(row)
+                    continue
+            
+            print("데이터 로드 완료")
+            print(f"총 처리된 레시피 수: {total_rows}")
+            
         except Exception as e:
-            print(f"검색 중 오류 발생: {e}")
-            return []
+            print(f"CSV 파일 처리 중 오류 발생: {e}")
+            raise
 
 def verify_ports():
     """모든 필요한 포트의 연결 상태 확인"""
@@ -246,7 +222,7 @@ def main():
         print("\nRecipeSearchManager 초기화 중...")
         manager = RecipeSearchManager(
             username="Administrator",
-            password="패스워드 입력"  # 실제 비밀번호로 변경하세요
+            password="shark1234"  # 실제 비밀번호로 변경하세요
         )
         
         # 3. 검색 인덱스 생성
