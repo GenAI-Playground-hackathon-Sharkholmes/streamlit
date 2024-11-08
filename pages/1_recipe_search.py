@@ -21,7 +21,7 @@ def get_couchbase_connection():
     cluster = Cluster(
         'couchbase://3.35.104.117',
         ClusterOptions(
-            PasswordAuthenticator('Administrator', YOUR_PASSWORD)
+            PasswordAuthenticator('Administrator', 'shark1234')
         )
     )
     bucket = cluster.bucket('recipes')

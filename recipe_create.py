@@ -34,7 +34,7 @@ def diet_recipe(content):
             0. Try to know that which food this content introduces.
             1. Extract the food recipe title as concisely as possible, focusing on nouns.
             2. There may be a typo in the content, so please correct it and reflect it.
-            3. Reflect the units of the ingredients, and substitute with exact diet-friendly ingredients if possible.
+            3. Reflect the units of the ingredients.
             4. Specify the cooking time in the steps and write steps that match the ingredients.
             5. If you can't make recipes based on Input, return each as unknown.
             6. When you write down answer, only write content about food.
