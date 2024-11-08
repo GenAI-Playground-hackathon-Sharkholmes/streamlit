@@ -1,165 +1,158 @@
 import streamlit as st
+import os
 from PIL import Image
-import io
 
-def get_dummy_image(width=300, height=200, color='gray'):
-    img = Image.new('RGB', (width, height), color=color)
-    img_byte_arr = io.BytesIO()
-    img.save(img_byte_arr, format='PNG')
-    return img_byte_arr.getvalue()
-
-def create_section(title, images, start_idx):
-    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+def create_recipe_card(recipe_data):
+    # 3개의 컬럼 생성: 이미지, 레시피 내용, 평가지표
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    # Initialize session state for this section if not exists
-    if f'show_more_{start_idx}' not in st.session_state:
-        st.session_state[f'show_more_{start_idx}'] = False
+    with col1:
+        # 이미지 파일이 현재 디렉토리에 있는지 확인
+        image_path = recipe_data["image"]
+        if os.path.exists(image_path):
+            try:
+                image = Image.open(image_path)
+                st.image(image, use_column_width=True)
+            except Exception as e:
+                st.error(f"이미지를 불러오는데 실패했습니다: {e}")
+        else:
+            st.error(f"이미지 파일을 찾을 수 없습니다: {image_path}")
     
-    # 기본적으로 3개만 보여주기
-    display_count = len(images) if st.session_state[f'show_more_{start_idx}'] else 3
+    with col2:
+        st.markdown(f"<div class='recipe-title'>{recipe_data['title']}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>재료</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='recipe-content'>{recipe_data['ingredients']}</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>👨‍🍳 조리법</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='recipe-content'>{recipe_data['steps']}</div>", unsafe_allow_html=True)
     
-    # Create rows of 3 items each
-    for row_idx in range(0, display_count, 3):
-        cols = st.columns(3)
-        for col_idx in range(3):
-            item_idx = row_idx + col_idx
-            if item_idx < display_count:
-                with cols[col_idx]:
-                    st.image(images[item_idx]["image"], use_column_width=True)
-                    st.markdown(f'<div class="recipe-title">{images[item_idx]["recipe"]}</div>', unsafe_allow_html=True)
-                    st.markdown(
-                        f'<div class="metadata">'
-                        f'<span>{images[item_idx]["date"]}</span>'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-                    if st.button("자세히 보기", key=f"btn_{start_idx}_{item_idx}", use_container_width=True):
-                        st.session_state.selected_item = f"{start_idx}_{item_idx}"
-    
-    # Show more/less button if there are more than 3 items
-    if len(images) > 3:
-        col1, col2, col3 = st.columns([1,1,1])
-        with col2:
-            if st.button(
-                "접기" if st.session_state[f'show_more_{start_idx}'] else "더보기",
-                key=f"more_{start_idx}",
-                use_container_width=True
-            ):
-                st.session_state[f'show_more_{start_idx}'] = not st.session_state[f'show_more_{start_idx}']
-                st.rerun()
+    with col3:
+        st.markdown("### 평가지표")
+        metrics_container = st.container()
+        with metrics_container:
+            st.metric("평균 머무르는 시간", f"{recipe_data['avg_time']}초")
+            st.metric("클릭 비율", f"{recipe_data['click_rate']}%")
+            st.markdown("**주요 타겟층**")
+            st.markdown(recipe_data["target_audience"])
+            st.metric("좋아요 수", recipe_data["likes"])
 
 def main():
-    st.set_page_config(layout="wide", page_title="채팅 히스토리")
+    st.set_page_config(layout="wide", page_title="레시피 대시보드")
     
     # Custom CSS
     st.markdown("""
         <style>
-        /* General layout */
         .main > div {
-            padding: 0 !important;
+            padding: 2rem;
         }
         
-        /* Section styling */
+        .recipe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        /* 레시피 내용 폰트 크기 관련 스타일 */
+        .recipe-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
         .section-title {
             font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            margin: 30px 0 20px 0;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
+            font-weight: bold;
+            margin: 15px 0;
         }
-        
-        /* Recipe card styling */
-        div[data-testid="column"] {
-            background: white;
-            border-radius: 12px;
-            padding: 10px;
-            margin: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease;
-        }
-        
-        div[data-testid="column"]:hover {
-            transform: translateY(-5px);
-        }
-        
-        .recipe-title {
-            font-size: 15px;
-            font-weight: 500;
-            margin: 10px 0;
-            color: #1a1a1a;
-        }
-        
-        .metadata {
-            color: #666;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-        
-        /* Button styling */
-        .stButton > button {
-            background-color: #f0f2f6;
-            color: #333;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            transition: background-color 0.2s ease;
-        }
-        
-        .stButton > button:hover {
-            background-color: #e6e9ef;
-        }
-        
-        /* Image styling */
-        img {
-            border-radius: 8px;
-            object-fit: cover;
+
+        .recipe-content {
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 20px;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    # Header
-    col1, col2 = st.columns([4,1])
-    with col1:
-        st.title("AGENT 관리 페이지")
-    with col2:
-        st.button("New Chat", type="secondary", use_container_width=True)
-        
-    # Sample data for each section (더 많은 아이템 추가)
-    sections = {
-        "새롭게 생성된 레시피별 대쉬보드 페르소나 별 평가지표": [
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "봄나물 비빔밥", "date": "2024.04.15"},
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "된장찌개", "date": "2024.04.15"},
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "나물무침", "date": "2024.04.15"},
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "김치찜", "date": "2024.04.15"},
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "갈비찜", "date": "2024.04.15"},
-            {"image": get_dummy_image(color='#FFE4E1'), "recipe": "미역국", "date": "2024.04.15"}
-        ],
-        "요아정": [
-            {"image": get_dummy_image(color='#E6E6FA'), "recipe": "김치찌개", "date": "2024.04.14"},
-            {"image": get_dummy_image(color='#E6E6FA'), "recipe": "제육볶음", "date": "2024.04.14"},
-            {"image": get_dummy_image(color='#E6E6FA'), "recipe": "간장계란밥", "date": "2024.04.14"},
-            {"image": get_dummy_image(color='#E6E6FA'), "recipe": "찜닭", "date": "2024.04.14"},
-            {"image": get_dummy_image(color='#E6E6FA'), "recipe": "부대찌개", "date": "2024.04.14"}
-        ],
-        "오뚜기 - 바로 간단하게 식사 준비 끝!": [
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "3분 카레", "date": "2024.04.13"},
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "즉석 냉면", "date": "2024.04.13"},
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "컵밥", "date": "2024.04.13"},
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "라면", "date": "2024.04.13"},
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "즉석죽", "date": "2024.04.13"},
-            {"image": get_dummy_image(color='#F0FFF0'), "recipe": "컵스프", "date": "2024.04.13"}
-        ]
-    }
+    st.title("레시피 분석 대시보드")
     
-    # Create sections
-    for idx, (title, images) in enumerate(sections.items()):
-        create_section(title, images, idx)
-        
-        # Add separator except for last section
-        if idx < len(sections) - 1:
-            st.markdown("<hr style='margin: 30px 0; border: none; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+    # 현재 스크립트의 디렉토리 경로 가져오기
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 샘플 레시피 데이터 - 로컬 이미지 파일 경로 사용
+    recipes = [
+        {
+            "title": "오크베리 아사이볼",
+            "image": os.path.join(current_dir, "acai_bowl_image.jpg.png"),  # 로컬 파일 경로
+            "ingredients": """• 냉동 오크베리 1컵
+            • 바나나 1개
+            • 그릭 요거트 1컵
+            • 우유 1/2컵
+            • 땅콩버터 2큰술
+            • 그래놀라 1/2컵
+            • 치아씨드 약간""",
+            "steps": """만드는 법 (조리시간 10분)
+            1. 냉동베리, 바나나, 그릭 요거트, 우유를 핸드블렌더나 믹서기에 갈아주세요.
+            2. 컵에 갈아준 재료를 반정도 부어주세요.
+            3. 땅콩버터를 취향에 맞게 넣어주세요.
+            4. 그 위에 남은 갈아준 재료를 다시 부어주세요.
+            5. 바나나, 그래놀라, 냉동베리, 치아씨드를 토핑으로 올려주면 완성입니다.""",
+            "avg_time": 120,
+            "click_rate": 45,
+            "target_audience": "20대 여성",
+            "likes": 234
+        },
+        {
+            "title": "과일 요거트 아이스크림",
+            "image": os.path.join(current_dir, "yogurt_icecream.png"),  # 로컬 파일 경로
+            "ingredients": """재료 (1인분)
+            • 요거트 아이스크림 1컵
+            • 파인애플 1/2컵
+            • 초코 시럽 1T
+            • 몰티저스 아이스크림 토핑 1T""",
+            "steps": """만드는 법 (조리시간 5분)
+            1. 요거트 아이스크림을 그릇에 담습니다.
+            2. 파인애플을 먹기 좋은 크기로 자릅니다.
+            3. 아이스크림 위에 파인애플을 올립니다.
+            4. 초코 시럽을 뿌립니다.
+            5. 마지막으로 몰티저스 아이스크림 토핑을 올려 완성합니다.""",
+            "avg_time": 90,
+            "click_rate": 38,
+            "target_audience": "10대 여성",
+            "likes": 156
+        },
+        {
+            "title": "통감자구이",
+            "image": os.path.join(current_dir, "baked_potato.png"),  # 로컬 파일 경로
+            "ingredients": """재료
+            • 감자 4개
+            • 소금 약간
+            • 후추 약간
+            • 올리브유 또는 버터 약간""",
+            "steps": """만드는 법 (조리시간 40분)
+            1. 감자를 씻어 껍질째 길게 자릅니다.
+            2. 자른 감자를 소금, 후추로 밑간을 합니다.
+            3. 팬에 올리브유 또는 버터를 두르고 감자를 굽습니다.
+            4. 15분 정도 굽다가 뒤집어가며 계속 구워줍니다.
+            5. 감자가 노릇노릇해지면 완성입니다.""",
+            "avg_time": 150,
+            "click_rate": 52,
+            "target_audience": "40대 남성",
+            "likes": 189
+        }
+    ]
+    
+    # 각 레시피에 대한 카드 생성
+    for recipe in recipes:
+        st.markdown("---")
+        create_recipe_card(recipe)
 
 if __name__ == "__main__":
     main()
