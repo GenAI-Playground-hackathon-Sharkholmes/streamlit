@@ -119,15 +119,13 @@ def fix_image_url(url):
     return url
 
 def recipe_engine():
-    st.write("""# 👩‍🍳키워드 입력을 통한 레시피 찾기""")
-    st.write(' ')
     st.write(' ')
     
     # content 초기화
     content = None
     
     
-    ingredients_input = st.text_input("음식, 재료 등 레시피 키워드를 입력하세요")
+    ingredients_input = st.text_input("음식, 재료 키워드를 입력하여 레시피를 찾아보세요")
 
     if ingredients_input:
         results = search_recipe(ingredients_input)
@@ -196,7 +194,7 @@ def recipe_engine():
 
 
 # UI 구성
-st.title("안녕하세요 요리랩입니다.")
+st.title("Recipe Search")
 content = recipe_engine()
 
 # 채팅 UI
