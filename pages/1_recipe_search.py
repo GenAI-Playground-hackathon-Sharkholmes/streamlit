@@ -14,13 +14,14 @@ from couchbase.search import (
     ConjunctionQuery,
     DisjunctionQuery
 )
+from recipe_create import diet_recipe
 
 # Couchbase 연결
 def get_couchbase_connection():
     cluster = Cluster(
         'couchbase://3.35.104.117',
         ClusterOptions(
-            PasswordAuthenticator('Administrator', 'shark1234')
+            PasswordAuthenticator('Administrator', YOUR_PASSWORD)
         )
     )
     bucket = cluster.bucket('recipes')
@@ -32,28 +33,55 @@ def search_recipe(query):
     cluster, collection = get_couchbase_connection()
     
     try:
-        # 기본 Match 쿼리 생성
         search_query = MatchQuery(query)
-        
-        # 검색 실행
         search_result = cluster.search_query(
-            "recipes._default.recipe-index",  # 인덱스 이름
+            "recipes._default.recipe-index",
             search_query,
             limit=10
         )
         
         hits = []
-        # 검색 결과 처리
         for hit in search_result:
             try:
-                # 문서 ID로 실제 문서 가져오기
                 doc = collection.get(hit.id).content_as[dict]
+                # info1 필드 처리하여 단계별 텍스트와 이미지 URL 매칭
+                steps_with_images = []
+                if isinstance(doc.get("info1"), str):
+                    items = [item.strip() for item in doc["info1"].split(",")]
+                    current_step = ""
+                    
+                    for item in items:
+                        if item.startswith("http"):
+                            # 현재 단계에 이미지 URL 추가
+                            if current_step:
+                                steps_with_images.append({
+                                    "text": current_step,
+                                    "image": fix_image_url(item)
+                                })
+                                current_step = ""
+                        else:
+                            # 텍스트 단계 저장
+                            if item.strip():
+                                if current_step:  # 이전 단계가 이미지 없이 끝난 경우
+                                    steps_with_images.append({
+                                        "text": current_step,
+                                        "image": None
+                                    })
+                                current_step = item
+                    
+                    # 마지막 단계 처리
+                    if current_step:
+                        steps_with_images.append({
+                            "text": current_step,
+                            "image": None
+                        })
+                
                 hits.append({
                     "_source": {
                         "RecipeName": doc.get("name", ""),
                         "Image": doc.get("img", ""),
                         "Ingredients_pre": doc.get("ingredients", []),
-                        "Steps": doc.get("recipe_steps", {}),
+                        "Steps": steps_with_images,
                         "Summary": doc.get("summary", "")
                     }
                 })
@@ -66,15 +94,12 @@ def search_recipe(query):
         st.error(f"검색 중 오류가 발생했습니다: {str(e)}")
         return []
 
-# ingredients 전처리 함수
 def process_type1(data):
     return data.replace('\n', '').replace('dd', '').strip()
 
-# JSON 문자열 정리 함수
 def clean_json_string(json_string):
     return re.sub(r'[\x00-\x1F\x7F]', '', json_string)
 
-# 이미지 URL 수정 함수
 def fix_image_url(url):
     if not url:
         return url
@@ -86,24 +111,19 @@ def fix_image_url(url):
     return url
 
 def recipe_engine():
-    st.write("""# 👩‍🍳기존에 있는 레시피를 어떻게 변경하면 좋을까""")
+    st.write("""# 👩‍🍳키워드 입력을 통한 레시피 찾기""")
     st.write(' ')
     st.write(' ')
-    # 사용자로부터 재료 입력 받기
     ingredients_input = st.text_input("음식, 재료 등 레시피 키워드를 입력하세요")
 
-    # 사용자가 재료를 입력한 경우
     if ingredients_input:
-        # Couchbase FTS로 레시피 검색
         results = search_recipe(ingredients_input)
         
-        # 검색 결과가 있을 경우
         if results:
             st.header("검색 결과")
             recipe_names = [hit['_source']['RecipeName'] for hit in results]
             selected_recipe = st.selectbox("검색된 레시피 선택", recipe_names)
             
-            # 선택한 레시피 정보 표시
             for hit in results:
                 if hit['_source']['RecipeName'] == selected_recipe:
                     st.subheader("선택한 레시피")
@@ -113,37 +133,43 @@ def recipe_engine():
                     
                     st.write("### 요리명")
                     st.write(f"{hit['_source']['RecipeName']}")
-                    steps = hit['_source'].get('Steps', {}).get('txt', '')
                     
                     try:
                         ingredients_list = hit['_source']['Ingredients_pre']
                         if isinstance(ingredients_list, str):
-                            ingredients_list = json.loads(ingredients_list)
-                        ingredient_names = ', '.join([ingredient.get('ingre_name', '') 
-                                                   for ingredient in ingredients_list])
+                            # 쉼표로 구분된 재료 목록 처리
+                            ingredients = [ing.strip() for ing in ingredients_list.split()]
+                            ingredient_names = ', '.join(ingredients)
+                        else:
+                            ingredient_names = process_type1(str(ingredients_list))
                     except (ValueError, SyntaxError, json.JSONDecodeError):
                         ingredient_names = process_type1(str(hit['_source']['Ingredients_pre']))
                     
                     st.write("### 재료")
                     st.write(f"{ingredient_names}")
-                    st.write("### 조리법")
                     
-                    if isinstance(steps, str):
-                        lines = steps.strip().split("\n")
-                        processed_steps = ""
-                        for line in lines:
-                            parts = line.split(", ")
-                            for part in parts:
-                                if not part.startswith("http"):
-                                    st.write(part)
-                                    processed_steps += part + "\n"
+                    st.write("### 조리법")
+                    steps = hit['_source']['Steps']
+                    for i, step in enumerate(steps, 1):
+                        # 단계별 설명
+                        st.write(f"{i}. {step['text']}")
+                        # 단계별 이미지가 있으면 표시
+                        if step['image']:
+                            try:
+                                st.image(step['image'], width=400, use_column_width='auto')
+                            except Exception as e:
+                                st.error(f"이미지 로딩 오류: {str(e)}")
                     
                     st.markdown("---")
 
+                    # 조리 단계 텍스트만 추출하여 저장
+                    steps_text = "\n".join([f"{i+1}. {step['text']}" 
+                                          for i, step in enumerate(steps)])
+                    
                     content = {
                         "title": hit['_source']['RecipeName'],
                         "ingredients": ingredient_names,
-                        "steps": processed_steps
+                        "steps": steps_text
                     }
                     
                     if st.button("✅다이어트 레시피 변환", key=f"select_diet"):
@@ -171,13 +197,5 @@ def recipe_engine():
         else:
             st.write("검색 결과가 없습니다.")
 
-def additional():
-    ingredients = st.chat_input("원하는 변경 사항을 입력해주세요!")
-    if ingredients:
-        st.subheader(f'{ingredients}의 효능')
-        st.write(effect_create(ingredients))
-        st.image("https://via.placeholder.com/500", caption="Generated Image")
-
 if __name__ == "__main__":
     recipe_engine()
-    additional()
