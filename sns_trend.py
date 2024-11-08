@@ -1,3 +1,4 @@
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import json
@@ -63,10 +64,9 @@ def load_data():
 
 def display_recipes(results):
     """레시피 표시"""
-    st.header("SNS Trend🧑‍🍳")
     search_query = st.text_input(
         label="검색",
-        placeholder="키워드 검색 시 관련 레시피만 보여져요🍳",
+        placeholder="키워드를 검색하여 SNS 트렌드 레시피를 확인해보세요",
         key="search_input"
     )
     
@@ -201,10 +201,20 @@ def display_recipes(results):
             st.error(f"JSON 파싱 오류: {str(e)}")
         except Exception as e:
             st.error(f"레시피 처리 중 오류가 발생했습니다: {str(e)}")
-
 def main():
-    st.set_page_config(page_title="레시피 변환 도우미", layout="wide")
-    st.title("🍳 레시피 변환 도우미")
+    # Set page configuration
+    st.set_page_config(page_title="요리랩 레시피 변환 도우미", layout="wide")
+    
+    # Load and display the logo at the top of the sidebar
+    logo_path = Path(__file__).parent / "img/logo.png"
+    try:
+        logo = Image.open(logo_path)
+        st.sidebar.image(logo, use_column_width=True)
+    except Exception as e:
+        st.error(f"로고 이미지를 불러올 수 없습니다: {str(e)}")
+    
+    # Title and other sidebar or main content go here
+    st.title("SNS Trend")
     
     try:
         results = load_data()
