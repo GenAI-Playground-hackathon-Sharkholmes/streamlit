@@ -88,7 +88,7 @@ def display_recipes(results):
             st.error(f"JSON 파싱 오류: {e}")
 
 def additional():
-    ingredients = st.chat_input("재료를 입력하면 효능을 생성해드려요!")
+    ingredients = st.chat_input("원하는 변경 사항을 입력해주세요!")
     if ingredients:
         st.subheader(f'{ingredients}의 효능')
         st.write(effect_create(ingredients))

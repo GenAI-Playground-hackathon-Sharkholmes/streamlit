@@ -18,7 +18,7 @@ from couchbase.search import (
 # Couchbase 연결
 def get_couchbase_connection():
     cluster = Cluster(
-        'couchbase://localhost:11210',
+        'couchbase://',
         ClusterOptions(
             PasswordAuthenticator('Administrator', 'shark1234')
         )
@@ -171,5 +171,13 @@ def recipe_engine():
         else:
             st.write("검색 결과가 없습니다.")
 
+def additional():
+    ingredients = st.chat_input("원하는 변경 사항을 입력해주세요!")
+    if ingredients:
+        st.subheader(f'{ingredients}의 효능')
+        st.write(effect_create(ingredients))
+        st.image("https://via.placeholder.com/500", caption="Generated Image")
+
 if __name__ == "__main__":
     recipe_engine()
+    additional()
