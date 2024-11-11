@@ -8,8 +8,8 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 # AWS 인증 정보 (실제 배포 시에는 환경변수나 secrets로 관리하세요)
-AWS_ACCESS_KEY_ID = "AKIA2UC3BM3L4TJNAHCP"
-AWS_SECRET_ACCESS_KEY = "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"
+AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID"
+AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"
 
 def get_bedrock_client():
     """Bedrock 클라이언트 생성"""

@@ -4,8 +4,8 @@ from PIL import Image
 from slack_bot import SlackRecipeBot  # slack_recipe_bot.py 임포트
 
 # Slack 설정
-SLACK_BOT_TOKEN = "xoxb-4997656156160-7997102205702-DyekH4lzxr4rvWGNChSXVyFA"
-CHANNEL_ID = "C07V95D03PY"
+SLACK_BOT_TOKEN = "SLACK_BOT_TOKEN"
+CHANNEL_ID = "CHANNEL_ID"
 
 def create_recipe_card(recipe_data):
     col1, col2, col3 = st.columns([1, 2, 1])

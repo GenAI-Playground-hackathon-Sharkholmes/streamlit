@@ -27,9 +27,9 @@ if 'chat_history' not in st.session_state:
 # Couchbase 연결
 def get_couchbase_connection():
     cluster = Cluster(
-        'couchbase://3.35.104.117',
+        'couchbase://HOST',
         ClusterOptions(
-            PasswordAuthenticator('Administrator', 'shark1234')
+            PasswordAuthenticator('Administrator', 'PASSWORD')
         )
     )
     bucket = cluster.bucket('recipes')

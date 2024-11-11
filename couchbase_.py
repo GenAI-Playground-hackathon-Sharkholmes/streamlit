@@ -15,7 +15,7 @@ import socket
 class RecipeSearchManager:
     def __init__(self, host="localhost",
                  username="Administrator", 
-                 password="shark1234",
+                 password="PASSWORD",
                  bucket_name="recipes"):
         try:
             # 모든 포트를 명시적으로 지정한 연결 문자열

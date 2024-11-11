@@ -8,16 +8,16 @@ from datetime import timedelta
 import os
 
 # 액세스 키를 환경 변수에 설정
-os.environ['AWS_ACCESS_KEY_ID'] = 'AKIA2UC3BM3L4TJNAHCP'
-os.environ['AWS_SECRET_ACCESS_KEY'] = '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'
+os.environ['AWS_ACCESS_KEY_ID'] = 'AWS_ACCESS_KEY_ID'
+os.environ['AWS_SECRET_ACCESS_KEY'] = 'AWS_SECRET_ACCESS_KEY'
 
 # boto3 클라이언트 생성
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 # Couchbase 설정
-COUCHBASE_HOST = "couchbase://3.35.104.117"
+COUCHBASE_HOST = "couchbase://HOST"
 COUCHBASE_USERNAME = "Administrator" 
-COUCHBASE_PASSWORD = "shark1234"
+COUCHBASE_PASSWORD = "PASSWORD"
 BUCKET_NAME = "recipes"
 
 # Couchbase 연결 함수
