@@ -1,4 +1,4 @@
-## 숙명여대 캠퍼스타운 X AWS GenAI Playground hackathon : YORILAB
+## 숙명여대 캠퍼스타운 X AWS GenAI Playground hackathon 대상(1st Prize) 수상 
 <img width="1920" alt="Frame 1" src="https://github.com/user-attachments/assets/aaaa9b4f-1901-4e83-89b7-5b9057597266">
 
 <br>
